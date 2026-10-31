@@ -4,10 +4,9 @@
 // and EventChannel "omni/radio/peers". Any peer that comes with a host + port is
 // handed to the local Omni daemon at http://127.0.0.1:5000/api/sync/peers.
 //
-// TODO(permissions): this app has no runtime-permission helper yet and we don't add
-// packages here. Call status() and check `missingPermissions`; request them
-// (BLUETOOTH_SCAN/ADVERTISE/CONNECT, NEARBY_WIFI_DEVICES, or ACCESS_FINE_LOCATION
-// on older Android) before start(), e.g. with a small native request later.
+// Permissions: omni_nearby.dart explains the feature, asks Android for them through
+// MainActivity's "omni/radio/permissions" channel, and only then calls
+// startWithNodeIdentity(). status() still reports `missingPermissions`.
 
 import 'dart:async';
 import 'dart:convert';
