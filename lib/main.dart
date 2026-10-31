@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'omni_bug_report.dart';
 import 'omni_consent_gate.dart';
+// ignore: unused_import
+import 'omni_radio_discovery.dart'; // compiled in so CI type-checks it; not started yet
 
 /// ============================================================================
 /// OMNIVERSE UNIFIED SUPERAPP MASTER UI (CANONICAL USER-FACING SHELL)
