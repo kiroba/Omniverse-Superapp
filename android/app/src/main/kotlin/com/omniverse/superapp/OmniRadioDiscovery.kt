@@ -205,6 +205,17 @@ class OmniRadioDiscovery(private val context: Context, messenger: BinaryMessenge
 
     // ---- Lifecycle ----
 
+    /** Runtime ("dangerous") permissions still missing, for the activity to request. */
+    fun missingRuntimePermissions(): List<String> =
+        (missingBlePermissions() + missingAwarePermissions())
+            .filter { it != "android.permission.ACCESS_WIFI_STATE" && it != "android.permission.CHANGE_WIFI_STATE" }
+            .distinct()
+
+    /** Re-run start() with the same identity (e.g. after the user grants permissions). */
+    fun restart() {
+        if (running && nodeHash.isNotEmpty()) start(nodeHash, port)
+    }
+
     fun start(hash: String, p: Int) {
         if (running) stop()
         nodeHash = hash.lowercase()

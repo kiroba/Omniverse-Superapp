@@ -1,9 +1,9 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'omni_bug_report.dart';
 import 'omni_consent_gate.dart';
-// ignore: unused_import
-import 'omni_radio_discovery.dart'; // compiled in so CI type-checks it; not started yet
+import 'omni_radio_discovery.dart';
 
 /// ============================================================================
 /// OMNIVERSE UNIFIED SUPERAPP MASTER UI (CANONICAL USER-FACING SHELL)
@@ -14,7 +14,32 @@ import 'omni_radio_discovery.dart'; // compiled in so CI type-checks it; not sta
 /// - Pure local state binding, 1-node pre-launch display, zero mock data.
 /// ============================================================================
 
-void main() => runApp(const OmniverseSuperappMaster());
+final GlobalKey<ScaffoldMessengerState> omniMessengerKey = GlobalKey<ScaffoldMessengerState>();
+
+void main() {
+  runApp(const OmniverseSuperappMaster());
+  WidgetsBinding.instance.addPostFrameCallback((_) => _startRadioDiscovery());
+}
+
+/// Starts BLE + Wi-Fi Aware discovery; peers with an address are handed to the local daemon.
+/// Test build: the beacon id is random per launch (not yet tied to the node key).
+Future<void> _startRadioDiscovery() async {
+  final rnd = Random.secure();
+  final hash = List.generate(16, (_) => rnd.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
+  try {
+    await OmniRadioDiscovery.instance.start(hash);
+    await Future<void>.delayed(const Duration(seconds: 6));
+    final s = await OmniRadioDiscovery.instance.status();
+    omniMessengerKey.currentState?.showSnackBar(SnackBar(
+      duration: const Duration(seconds: 12),
+      content: Text('Radio: BLE adv=${s['bleAdvertising']} scan=${s['bleScanning']} | '
+          'Wi-Fi Aware supported=${s['wifiAwareSupported']} available=${s['wifiAwareAvailable']} | '
+          'missing=${s['missingPermissions']} | beacon $hash'),
+    ));
+  } catch (e) {
+    omniMessengerKey.currentState?.showSnackBar(SnackBar(content: Text('Radio discovery failed: $e')));
+  }
+}
 
 class OmniverseSuperappMaster extends StatelessWidget {
   const OmniverseSuperappMaster({super.key});
@@ -23,6 +48,7 @@ class OmniverseSuperappMaster extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'The Omniverse Superapp',
+      scaffoldMessengerKey: omniMessengerKey,
       debugShowCheckedModeBanner: false,
       theme: ThemeData.dark().copyWith(
         primaryColor: const Color(0xFF6200EE),
