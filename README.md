@@ -1,6 +1,6 @@
-# Omniverse-Superapp
+# The Omni-Hub
 
-The Omniverse Superapp for The Omniverse. Split out of [kiroba/The-Omniverse](https://github.com/kiroba/The-Omniverse) with its git history (Oct 30 2026).
+The superapp container that holds every Omniverse experience. Formerly Omniverse-Superapp. Split out of [kiroba/The-Omniverse](https://github.com/kiroba/The-Omniverse) with its git history (Oct 30 2026).
 
 ## Build
 ```
