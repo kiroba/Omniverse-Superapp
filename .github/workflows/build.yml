@@ -25,6 +25,8 @@ jobs:
           channel: 'stable'
       - name: Install dependencies
         run: flutter pub get
+      - name: Unit tests
+        run: flutter test
       - name: Build APK
         run: |
           flutter build apk --release --target-platform android-arm64 --android-skip-build-dependency-validation \

@@ -15,6 +15,8 @@ import 'dart:io';
 
 import 'package:flutter/services.dart';
 
+import 'omni_node_identity.dart';
+
 class OmniRadioPeer {
   final String transport; // "ble" | "wifi_aware"
   final String nodeHash;
@@ -56,6 +58,25 @@ class OmniRadioDiscovery {
   Stream<OmniRadioPeer>? _peers;
   StreamSubscription<OmniRadioPeer>? _handoff;
   final Map<String, DateTime> _lastPosted = {};
+
+  /// The identity the beacon carries, set by [startWithNodeIdentity].
+  OmniNodeIdentity? identity;
+
+  /// App-private dir for the per-install id when the caller passes none. On Android
+  /// Directory.systemTemp is the app's cache dir, so its parent is the app's data dir.
+  static Directory defaultStateDir() =>
+      Directory('${Directory.systemTemp.parent.path}${Platform.pathSeparator}files');
+
+  /// Starts the radios with the daemon's node key (or the stable per-install id when no daemon
+  /// answers), so a beacon names the same node that signs the events it syncs. Prefer this over
+  /// [start]. The result also carries `identitySource` ("daemon" | "install") and `identity`.
+  Future<Map<String, dynamic>> startWithNodeIdentity(
+      {Directory? stateDir, int port = 5005}) async {
+    final id = await OmniNodeIdentity.resolve(stateDir: stateDir ?? defaultStateDir());
+    identity = id;
+    final r = await start(id.hex, port: port);
+    return {...r, 'identitySource': id.source, 'identity': id.hex};
+  }
 
   bool get supported => Platform.isAndroid;
 
