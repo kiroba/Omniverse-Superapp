@@ -1,0 +1,32 @@
+name: omniverse_superapp
+description: "The Omniverse Superapp for The Omniverse"
+publish_to: 'none'
+version: 5.4.0+540
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+  http: ^1.2.0
+  ota_update: ^7.1.0
+  omni_core_ui:
+    git:
+      url: https://github.com/kiroba/Omni-Core-UI.git
+      ref: v0.1.0
+  cryptography: ^2.7.0
+  crypto: ^3.0.3
+  sqflite: ^2.3.0
+  path: ^1.9.0
+  url_launcher: ^6.3.1
+  device_info_plus: ^11.3.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
