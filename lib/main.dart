@@ -2,8 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'omni_bug_report.dart';
 import 'omni_consent_gate.dart';
-// ignore: unused_import
-import 'omni_radio_discovery.dart'; // compiled in so CI type-checks it; not started yet
+import 'omni_nearby.dart'; // "Find people nearby?" prompt + BLE / Wi-Fi Aware start
 
 /// ============================================================================
 /// OMNIVERSE UNIFIED SUPERAPP MASTER UI (CANONICAL USER-FACING SHELL)
@@ -61,6 +60,15 @@ class _SuperappMasterScreenState extends State<SuperappMasterScreen> {
   int _miningExp = 0;
   bool _isMiningActive = false;
   Timer? _skillingTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    // Ask once on first launch (after the consent gate); restart quietly if Nearby is already on.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) OmniNearby.instance.onLaunch(context);
+    });
+  }
 
   @override
   void dispose() {
@@ -134,6 +142,7 @@ class _SuperappMasterScreenState extends State<SuperappMasterScreen> {
         backgroundColor: const Color(0xFF1F1F1F),
         elevation: 2,
         actions: [
+          const NearbyButton(),
           IconButton(
             icon: const Icon(Icons.account_balance_wallet, color: Color(0xFFBB86FC)),
             tooltip: 'Sovereign Wallet',
