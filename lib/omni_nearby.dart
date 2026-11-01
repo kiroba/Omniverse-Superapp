@@ -60,6 +60,15 @@ class RadioPermissions {
     }
   }
 
+  /// Opens Omni Node. False when it isn't installed.
+  static Future<bool> openNode() async {
+    try {
+      return await _ch.invokeMethod('openNode') == true;
+    } catch (_) {
+      return false;
+    }
+  }
+
   static Future<void> openSettings() async {
     try {
       await _ch.invokeMethod('openSettings');
@@ -74,6 +83,25 @@ class OmniNearby extends ChangeNotifier {
   bool running = false;
   String? identitySource; // "daemon" | "install"
 
+  /// Omni Node owns the radios (Node 0.2.0+): this app doesn't start its own, so every Omni app
+  /// shares one set of Bluetooth / Wi-Fi Aware peers through the node.
+  bool byNode = false;
+
+  /// Omni Node answers loopback node-health with 401 (it requires its local token, OMNI_LOCAL_TOKEN=1).
+  static Future<bool> nodeIsRunning() async {
+    final http = HttpClient()..connectionTimeout = const Duration(milliseconds: 1500);
+    try {
+      final req = await http.getUrl(Uri.parse('http://127.0.0.1:9100/api/v1/telemetry/node-health'));
+      final res = await req.close().timeout(const Duration(seconds: 2));
+      await res.drain<void>();
+      return res.statusCode == 401;
+    } catch (_) {
+      return false;
+    } finally {
+      http.close(force: true);
+    }
+  }
+
   NearbyChoiceStore get _store => NearbyChoiceStore(OmniRadioDiscovery.defaultStateDir());
 
   bool get supported => Platform.isAndroid;
@@ -81,6 +109,12 @@ class OmniNearby extends ChangeNotifier {
   /// Call once after the first frame. Asks on first launch; restarts quietly if already on.
   Future<void> onLaunch(BuildContext context) async {
     if (!supported) return;
+    if (await nodeIsRunning()) {
+      byNode = true;
+      if (running) await stop();
+      notifyListeners();
+      return;
+    }
     final choice = await _store.read();
     if (choice == false) return;
     if (choice == true) {
@@ -95,6 +129,26 @@ class OmniNearby extends ChangeNotifier {
   /// The explainer, then Android's dialog. Also what the app-bar Nearby button opens.
   Future<void> ask(BuildContext context) async {
     if (!supported) return;
+    if (byNode || await nodeIsRunning()) {
+      byNode = true;
+      if (running) await stop();
+      notifyListeners();
+      if (!context.mounted) return;
+      final open = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Nearby runs in Omni Node'),
+          content: const Text('Omni Node handles Bluetooth and Wi-Fi for all your Omni apps, '
+              'so they share the same nearby people. Turn it on or off there.'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('OK')),
+            FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Open Omni Node')),
+          ],
+        ),
+      );
+      if (open == true) await RadioPermissions.openNode();
+      return;
+    }
     final yes = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -167,9 +221,9 @@ class NearbyButton extends StatelessWidget {
     return AnimatedBuilder(
       animation: nearby,
       builder: (context, _) => IconButton(
-        icon: Icon(nearby.running ? Icons.wifi_tethering : Icons.wifi_tethering_off,
-            color: nearby.running ? const Color(0xFF03DAC6) : Colors.grey),
-        tooltip: nearby.running ? 'Nearby is on' : 'Find people nearby',
+        icon: Icon(nearby.running || nearby.byNode ? Icons.wifi_tethering : Icons.wifi_tethering_off,
+            color: nearby.running || nearby.byNode ? const Color(0xFF03DAC6) : Colors.grey),
+        tooltip: nearby.byNode ? 'Nearby runs in Omni Node' : (nearby.running ? 'Nearby is on' : 'Find people nearby'),
         onPressed: () => nearby.ask(context),
       ),
     );

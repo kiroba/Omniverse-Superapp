@@ -28,6 +28,12 @@ class MainActivity : FlutterActivity() {
             when (call.method) {
                 "check" -> result.success(permissionReport(requested = false))
                 "request" -> requestRadioPermissions(result)
+                "openNode" -> {
+                    val i = packageManager.getLaunchIntentForPackage("com.omniverse.node")
+                    if (i == null) result.success(false) else {
+                        startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); result.success(true)
+                    }
+                }
                 "openSettings" -> {
                     try {
                         startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
