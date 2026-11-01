@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:omni_core_ui/omni_core_ui.dart' show OmniOta;
 import 'omni_bug_report.dart';
 import 'omni_consent_gate.dart';
 import 'omni_nearby.dart'; // "Find people nearby?" prompt + BLE / Wi-Fi Aware start
@@ -152,6 +153,22 @@ class _SuperappMasterScreenState extends State<SuperappMasterScreen> {
             icon: const Icon(Icons.bug_report_outlined, color: Colors.grey),
             tooltip: 'Report a bug',
             onPressed: () => showBugReportSheet(context, appName: 'Omniverse Superapp'),
+          ),
+          PopupMenuButton<String>(
+            tooltip: 'More',
+            onSelected: (value) {
+              if (value == 'check_updates') OmniOta.checkAndPrompt(context);
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem<String>(
+                value: 'check_updates',
+                child: ListTile(
+                  leading: Icon(Icons.system_update),
+                  title: Text('Check for updates'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ),
+            ],
           ),
         ],
       ),
